@@ -9,7 +9,7 @@ from scipy.interpolate import CubicSpline
 ### two possible problems: smoothing scale and other.### check damping is ok.
 
 ### basic tools
-def kxkzToKmu(kx,kz):
+def kxkzToKmu(kx,kz): ### note: kx is basically kperp here. kz is kpar.
     k = numpy.sqrt(kx**2. + kz**2.) 
     mu = kz/k
     return k, mu
@@ -19,7 +19,7 @@ def kmuToKxkz(k,mu):
     kx = numpy.sqrt(1.-mu**2.)*k
     return kx, kz
 
-def S(kx,kz=None,ksmooth=0.1):
+def S(kx,kz=None,ksmooth=0.1): ### fincheck: is this array size ok?
     if type(kz) is numpy.ndarray:
         kz = kz
     else:
@@ -43,8 +43,8 @@ def cSigmaSWrongPerp(k,kdiff,p,b,f,btilde,ftilde,alphaPar,alphaPerp):
         kzAinv = kv*muv/alphaPar
         kAinv = numpy.sqrt(kxAinv**2.+kzAinv**2.)
         muAinv = numpy.nan_to_num(kzAinv/kAinv)
-        g = (b+f*muv**2.)/(btilde+ftilde*muAinv**2.)
-        SigmaSMu[i] = numpy.sum(1./(2.*numpy.pi)**3.*deltaMu*2.*numpy.pi*kv**2.*(1-muv**2.)*kv**2.*g**2.*S(kxAinv,kzAinv)**2.*p[i]/kv**4./2./alphaPerp**4.)
+        g = (b+f*muv**2.)/(btilde+ftilde*muAinv**2.)*(kv**2./kAinv**2.)### fixed
+        SigmaSMu[i] = numpy.sum(1./(2.*numpy.pi)**3.*deltaMu*2.*numpy.pi*kv**2.*(1.-muv**2.)*kv**2.*g**2.*S(kxAinv,kzAinv)**2.*p[i]/kv**4./2./alphaPerp**4.)#### has 1/a^4 unlike 4.21
     return numpy.sum(SigmaSMu*kdiff)
 
 def cSigmaSWrongPar(k,kdiff,p,b,f,btilde,ftilde,alphaPar,alphaPerp):
@@ -60,7 +60,7 @@ def cSigmaSWrongPar(k,kdiff,p,b,f,btilde,ftilde,alphaPar,alphaPerp):
         kzAinv = kv*muv/alphaPar
         kAinv = numpy.sqrt(kxAinv**2.+kzAinv**2.)
         muAinv = numpy.nan_to_num(kzAinv/kAinv)
-        g = (b+f*muv**2.)/(btilde+ftilde*muAinv**2.)
+        g = (b+f*muv**2.)/(btilde+ftilde*muAinv**2.)*(kv**2./kAinv**2.)
         SigmaSMu[i] = numpy.sum(1./(2.*numpy.pi)**3.*deltaMu*2.*numpy.pi*kv**2.*(muv**2.)*kv**2.*g**2.*S(kxAinv,kzAinv)**2.*p[i]/kv**4./alphaPar**4.)
     return numpy.sum(SigmaSMu*kdiff)
 
@@ -77,7 +77,7 @@ def cSigmaDWrongPerp(k,kdiff,p,b,f,btilde,ftilde,alphaPar,alphaPerp):
         kzAinv = kv*muv/alphaPar
         kAinv = numpy.sqrt(kxAinv**2.+kzAinv**2.)
         muAinv = numpy.nan_to_num(kzAinv/kAinv)
-        g = (b+f*muv**2.)/(btilde+ftilde*muAinv**2.)
+        g = (b+f*muv**2.)/(btilde+ftilde*muAinv**2.)*(kv**2./kAinv**2.)
         SigmaSMu[i] = numpy.sum(1./(2.*numpy.pi)**3.*deltaMu*2.*numpy.pi*kv**2.*(1-muv**2.)*kv**2.*(1.-g*S(kxAinv,kzAinv)/alphaPerp**2.)**2.*p[i]/kv**4./2.)
     return numpy.sum(SigmaSMu*kdiff)
 
@@ -94,19 +94,10 @@ def cSigmaDWrongPar(k,kdiff,p,b,f,btilde,ftilde,alphaPar,alphaPerp):
         kzAinv = kv*muv/alphaPar
         kAinv = numpy.sqrt(kxAinv**2.+kzAinv**2.)
         muAinv = numpy.nan_to_num(kzAinv/kAinv)
-        g = (b+f*muv**2.)/(btilde+ftilde*muAinv**2.)
-        SigmaSMu[i] = numpy.sum(1./(2.*numpy.pi)**3.*deltaMu*2.*numpy.pi*kv**2.*(muv**2.)*kv**2.*(1.-(1.+ftilde)/(1.+f)*g*S(kxAinv,kzAinv)/alphaPar**2.)**2.*p[i]/kv**4./2.)
+        g = (b+f*muv**2.)/(btilde+ftilde*muAinv**2.)*(kv**2./kAinv**2.)
+        SigmaSMu[i] = numpy.sum(1./(2.*numpy.pi)**3.*deltaMu*2.*numpy.pi*kv**2.*(muv**2.)*kv**2.*(1.-(1.+ftilde)/(1.+f)*g*S(kxAinv,kzAinv)/alphaPar**2.)**2.*p[i]/kv**4.)##fixed 2.
     return numpy.sum(SigmaSMu*kdiff)
 
-def cSigmaSDWrongPerp(k,kdiff,p,b,f,btilde,ftilde,alphaPar,alphaPerp):
-    SigmaSD = cSigmaSWrongPerp(k,kdiff,p,b,f,btilde,ftilde,alphaPar,alphaPerp)+cSigmaDWrongPerp(k,kdiff,p,b,f,btilde,ftilde,alphaPar,alphaPerp)
-    SigmaSD =  SigmaSD/2.
-    return SigmaSD
-
-def cSigmaSDWrongPar(k,kdiff,p,b,f,btilde,ftilde,alphaPar,alphaPerp):
-    SigmaSD = cSigmaSWrongPar(k,kdiff,p,b,f,btilde,ftilde,alphaPar,alphaPerp)+cSigmaDWrongPar(k,kdiff,p,b,f,btilde,ftilde,alphaPar,alphaPerp)
-    SigmaSD =  SigmaSD/2.
-    return SigmaSD
 
 ### reconstructed power spectrum (general) + squashed power spectrum (fixed alpha)
 def totalPowerWrongRecons(kk,mu,b,f,btilde,ftilde,alphaPar,alphaPerp,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p):
@@ -143,6 +134,7 @@ def totalPowerWrongReconsFixedAlpha(kk,mu,b,f,btilde,ftilde,alphaPar,alphaPerp,S
     sdExp = ssExp*0.5+ddExp*0.5
     totalPower = alphaPar*alphaPerp**2.*(b+f*muPrimed**2.)**2.*numpy.interp(kPrimed,k,p)*(ModS**2.*numpy.exp(ssExp)+(1.-ModS)**2.*numpy.exp(ddExp)+2.*ModS*(1-ModS)*numpy.exp(sdExp))
     return totalPower
+
 
 ### monopole, quadrupole etc
 def totalPowerMonopoleWrong(kk,b,f,btilde,ftilde,alphaPar,alphaPerp,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p):
