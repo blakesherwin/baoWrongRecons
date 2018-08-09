@@ -44,7 +44,7 @@ def cSigmaSWrongPerp(k,kdiff,p,b,f,btilde,ftilde,alphaPar,alphaPerp):
         kAinv = numpy.sqrt(kxAinv**2.+kzAinv**2.)
         muAinv = numpy.nan_to_num(kzAinv/kAinv)
         g = (b+f*muv**2.)/(btilde+ftilde*muAinv**2.)*(kv**2./kAinv**2.)### fixed
-        SigmaSMu[i] = numpy.sum(1./(2.*numpy.pi)**3.*deltaMu*2.*numpy.pi*kv**2.*(1.-muv**2.)*kv**2.*g**2.*S(kxAinv,kzAinv)**2.*p[i]/kv**4./2./alphaPerp**4.)#### has 1/a^4 unlike 4.21
+        SigmaSMu[i] = numpy.sum(1./(2.*numpy.pi)**3.*deltaMu*2.*numpy.pi*kv**2.*(1.-muv**2.)*kv**2.*g**2.*S(kxAinv,kzAinv)**2.*p[i]/kv**4./2./alphaPerp**4.)#### has 1/a^4 unlike 4
     return numpy.sum(SigmaSMu*kdiff)
 
 def cSigmaSWrongPar(k,kdiff,p,b,f,btilde,ftilde,alphaPar,alphaPerp):
@@ -109,8 +109,8 @@ def totalPowerWrongRecons(kk,mu,b,f,btilde,ftilde,alphaPar,alphaPerp,SigmaSPar,S
     muPrimed = numpy.nan_to_num(muPrimed)
 
     ModS = S(kx,kz)*(1.+ftilde*mu**2.)/(btilde+ftilde*mu**2.)
-    ssExp = -kPrimed**2.*((1.-mu**2.)*SigmaSPerp+(1.+ftilde)**2.*mu**2.*SigmaSPar)
-    ddExp = -kPrimed**2.*((1.-mu**2.)*SigmaDPerp+(1.+f)**2.*mu**2.*SigmaDPar)
+    ssExp = -kPrimed**2.*((1.-muPrimed**2.)*SigmaSPerp+(1.+ftilde)**2.*muPrimed**2.*SigmaSPar)
+    ddExp = -kPrimed**2.*((1.-muPrimed**2.)*SigmaDPerp+(1.+f)**2.*muPrimed**2.*SigmaDPar)
     sdExp = ssExp*0.5+ddExp*0.5
     totalPower = alphaPar*alphaPerp**2.*(b+f*muPrimed**2.)**2.*numpy.interp(kPrimed,k,p)*(ModS**2.*numpy.exp(ssExp)+(1.-ModS)**2.*numpy.exp(ddExp)+2.*ModS*(1-ModS)*numpy.exp(sdExp))
     return totalPower
@@ -129,8 +129,8 @@ def totalPowerWrongReconsFixedAlpha(kk,mu,b,f,btilde,ftilde,alphaPar,alphaPerp,S
     muPrimed = numpy.nan_to_num(muPrimed)
 
     ModS = S(kx,kz)*(1.+ftilde*mu**2.)/(btilde+ftilde*mu**2.)
-    ssExp = -kPrimed**2.*((1.-mu**2.)*SigmaSPerp+(1.+ftilde)**2.*mu**2.*SigmaSPar)
-    ddExp = -kPrimed**2.*((1.-mu**2.)*SigmaDPerp+(1.+f)**2.*mu**2.*SigmaDPar)
+    ssExp = -kPrimed**2.*((1.-muPrimed**2.)*SigmaSPerp+(1.+ftilde)**2.*muPrimed**2.*SigmaSPar)
+    ddExp = -kPrimed**2.*((1.-muPrimed**2.)*SigmaDPerp+(1.+f)**2.*muPrimed**2.*SigmaDPar)
     sdExp = ssExp*0.5+ddExp*0.5
     totalPower = alphaPar*alphaPerp**2.*(b+f*muPrimed**2.)**2.*numpy.interp(kPrimed,k,p)*(ModS**2.*numpy.exp(ssExp)+(1.-ModS)**2.*numpy.exp(ddExp)+2.*ModS*(1-ModS)*numpy.exp(sdExp))
     return totalPower
@@ -251,15 +251,16 @@ SigmaDPar = cSigmaDWrongPar(k,kdiff,p,2.,0.55,bf,ff,afpar,afperp)
 #### evaluate default and 'squashed' spectra
 defaultMonopole = (totalPowerMonopoleWrong(k,2.,0.55,bf,ff,afpar,afperp,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p)-totalPowerMonopoleWrong(k,2.,0.55,bf,ff,afpar,afperp,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,pn))/PNW(k)
 defaultQuadrupole = (totalPowerQuadrupoleWrong(k,2.,0.55,bf,ff,afpar,afperp,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p)-totalPowerQuadrupoleWrong(k,2.,0.55,bf,ff,afpar,afperp,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,pn))/PNW(k)
-defaultMonopoleFixedAlphaPerp = (totalPowerMonopoleWrongFixedAlpha(k,2.,0.55,bf,ff,awrongfactor,afpar,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p)-totalPowerMonopoleWrongFixedAlpha(k,2.,0.55,bf,ff,awrongfactor,afpar,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,pn))/PNW(k)
-defaultMonopoleFixedAlphaPar = (totalPowerMonopoleWrongFixedAlpha(k,2.,0.55,bf,ff,afperp,awrongfactor,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p)-totalPowerMonopoleWrongFixedAlpha(k,2.,0.55,bf,ff,afperp,awrongfactor,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,pn))/PNW(k)
+defaultMonopoleFixedWrongPar = (totalPowerMonopoleWrongFixedAlpha(k,2.,0.55,bf,ff,awrongfactor,afperp,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p)-totalPowerMonopoleWrongFixedAlpha(k,2.,0.55,bf,ff,awrongfactor,afperp,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,pn))/PNW(k)
+defaultMonopoleFixedWrongPerp = (totalPowerMonopoleWrongFixedAlpha(k,2.,0.55,bf,ff,afpar,awrongfactor,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p)-totalPowerMonopoleWrongFixedAlpha(k,2.,0.55,bf,ff,afpar,awrongfactor,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,pn))/PNW(k)
 
 correlationMonopoleDefault = nbodykit.cosmology.correlation.pk_to_xi(k,totalPowerMonopoleWrong(k,2.,0.55,bf,ff,afpar,afperp,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p)\
 )
 correlationQuadrupoleDefault = nbodykit.cosmology.correlation.pk_to_xi_quad(k,totalPowerQuadrupoleWrong(k,2.,0.55,bf,ff,afpar,afperp,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p)\
 )
-correlationMonopoleWrongPar = nbodykit.cosmology.correlation.pk_to_xi(k,totalPowerMonopoleWrongFixedAlpha(k,2.,0.55,bf,ff,awrongfactor,afpar,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p))
-correlationMonopoleWrongPerp = nbodykit.cosmology.correlation.pk_to_xi(k,totalPowerMonopoleWrongFixedAlpha(k,2.,0.55,bf,ff,afperp,awrongfactor,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p))
+
+correlationMonopoleWrongPar = nbodykit.cosmology.correlation.pk_to_xi(k,totalPowerMonopoleWrongFixedAlpha(k,2.,0.55,bf,ff,awrongfactor,afperp,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p))
+correlationMonopoleWrongPerp = nbodykit.cosmology.correlation.pk_to_xi(k,totalPowerMonopoleWrongFixedAlpha(k,2.,0.55,bf,ff,afpar,awrongfactor,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p))
 correlationQuadrupoleWrongPar = nbodykit.cosmology.correlation.pk_to_xi_quad(k,totalPowerQuadrupoleWrongFixedAlpha(k,2.,0.55,bf,ff,awrongfactor,afperp,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p))
 correlationQuadrupoleWrongPerp = nbodykit.cosmology.correlation.pk_to_xi_quad(k,totalPowerQuadrupoleWrongFixedAlpha(k,2.,0.55,bf,ff,afpar,awrongfactor,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p))
 
@@ -292,11 +293,11 @@ for i in xrange(4):
     newMonopole2 = CubicSpline(k,newMonopole)
     defaultMonopole2 = CubicSpline(k,defaultMonopole)
     if afperp >1:
-        defaultMonopoleFix2 = CubicSpline(k,defaultMonopoleFixedAlphaPerp)
+        defaultMonopoleFix2 = CubicSpline(k,defaultMonopoleFixedWrongPerp)
         correlationMonopoleSquash = correlationMonopoleWrongPerp
         correlationQuadrupoleSquash = correlationQuadrupoleWrongPerp
     elif afpar >1: 
-        defaultMonopoleFix2 = CubicSpline(k,defaultMonopoleFixedAlphaPar)
+        defaultMonopoleFix2 = CubicSpline(k,defaultMonopoleFixedWrongPar)
         correlationMonopoleSquash = correlationMonopoleWrongPar
         correlationQuadrupoleSquash = correlationQuadrupoleWrongPar
     else:
@@ -373,7 +374,7 @@ for i in xrange(4):
     # ratio
     pylab.clf()
     pylab.plot(rArray,wrongCorr/squashCorr,label='wrong / rescaled corr.',color='b')
-    pylab.plot(rArray[rArray>10.],((wrongQuad/squashQuad)[rArray>10.]-1.)/5.+1.,label='wrong / rescaled quad. '+r'$\times 0.2$',color='r')
+    pylab.plot(rArray[rArray>18.],((wrongQuad/squashQuad)[rArray>18.]-1.)/5.+1.,label='wrong / rescaled quad. '+r'$\times 0.2$',color='r')
     pylab.axvline(x=maximumOfDefault,color='k',linestyle=':')
     pylab.xlabel('separation '+r'$r  \ \mathrm{[Mpc / h]}$',fontsize=14)
     pylab.ylabel('ratio of correlation functions '+r'$\xi(r)$',fontsize=14 )
