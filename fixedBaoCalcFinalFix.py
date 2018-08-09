@@ -119,14 +119,14 @@ def totalPowerWrongReconsFixedAlpha(kk,mu,b,f,btilde,ftilde,alphaPar,alphaPerp,S
     kx, kz = kmuToKxkz(kk,mu)
     kxPrimed = kx * alphaPerp
     kzPrimed = kz * alphaPar
-    kx = kxPrimed.copy()
-    kz = kzPrimed.copy()
+    kx = kxPrimed.copy()### set kx = kx'
+    kz = kzPrimed.copy()###     ky = ky'
 
-    kPrimed = numpy.sqrt(kxPrimed**2.+kzPrimed**2.)
-    muPrimed = kzPrimed/kPrimed
-    kk = kPrimed.copy()
-    mu = muPrimed.copy()#### is this wrong? no it is ok.
-    muPrimed = numpy.nan_to_num(muPrimed)
+    kPrimed = numpy.sqrt(kxPrimed**2.+kzPrimed**2.) ### calc k'
+    muPrimed = kzPrimed/kPrimed  ### calc mu'
+    kk = kPrimed.copy()  ### set k = k' and mu = mu'
+    mu = muPrimed.copy()#### is this wrong? no it is ok. i have set all of kx, ky, k, mu = primed quantities.
+    muPrimed = numpy.nan_to_num(muPrimed) ### from here on, all is primed.
 
     ModS = S(kx,kz)*(1.+ftilde*mu**2.)/(btilde+ftilde*mu**2.)
     ssExp = -kPrimed**2.*((1.-muPrimed**2.)*SigmaSPerp+(1.+ftilde)**2.*muPrimed**2.*SigmaSPar)
@@ -225,11 +225,12 @@ k1 = numpy.roll(k,1)
 kdiff = k-k1
 kdiff[0] = 0.
 p = numpy.array(P(k))#m[:,1]
+###print k, kdiff, p
 pn = numpy.array(PNW(k))
 corr = nbodykit.cosmology.correlation.pk_to_xi(k,p)
 rrr = numpy.arange(1000.)/1000.*200.
 pylab.plot(rrr,corr(rrr)*rrr**2.)
-print 'peak input 0 ', rrr[rrr**2.*corr(rrr)==numpy.max((rrr**2.*corr(rrr))[rrr>80.])]
+###print 'peak input 0 ', rrr[rrr**2.*corr(rrr)==numpy.max((rrr**2.*corr(rrr))[rrr>80.])]
 pylab.axvline(x=98.6,color='k',linestyle=':')
 pylab.savefig('correlationPlot.png')
 pylab.clf()
@@ -259,10 +260,10 @@ correlationMonopoleDefault = nbodykit.cosmology.correlation.pk_to_xi(k,totalPowe
 correlationQuadrupoleDefault = nbodykit.cosmology.correlation.pk_to_xi_quad(k,totalPowerQuadrupoleWrong(k,2.,0.55,bf,ff,afpar,afperp,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p)\
 )
 
-correlationMonopoleWrongPar = nbodykit.cosmology.correlation.pk_to_xi(k,totalPowerMonopoleWrongFixedAlpha(k,2.,0.55,bf,ff,awrongfactor,afperp,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p))
-correlationMonopoleWrongPerp = nbodykit.cosmology.correlation.pk_to_xi(k,totalPowerMonopoleWrongFixedAlpha(k,2.,0.55,bf,ff,afpar,awrongfactor,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p))
-correlationQuadrupoleWrongPar = nbodykit.cosmology.correlation.pk_to_xi_quad(k,totalPowerQuadrupoleWrongFixedAlpha(k,2.,0.55,bf,ff,awrongfactor,afperp,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p))
-correlationQuadrupoleWrongPerp = nbodykit.cosmology.correlation.pk_to_xi_quad(k,totalPowerQuadrupoleWrongFixedAlpha(k,2.,0.55,bf,ff,afpar,awrongfactor,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p))
+correlationMonopoleFixedWrongPar = nbodykit.cosmology.correlation.pk_to_xi(k,totalPowerMonopoleWrongFixedAlpha(k,2.,0.55,bf,ff,awrongfactor,afperp,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p))
+correlationMonopoleFixedWrongPerp = nbodykit.cosmology.correlation.pk_to_xi(k,totalPowerMonopoleWrongFixedAlpha(k,2.,0.55,bf,ff,afpar,awrongfactor,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p))
+correlationQuadrupoleFixedWrongPar = nbodykit.cosmology.correlation.pk_to_xi_quad(k,totalPowerQuadrupoleWrongFixedAlpha(k,2.,0.55,bf,ff,awrongfactor,afperp,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p))
+correlationQuadrupoleFixedWrongPerp = nbodykit.cosmology.correlation.pk_to_xi_quad(k,totalPowerQuadrupoleWrongFixedAlpha(k,2.,0.55,bf,ff,afpar,awrongfactor,SigmaSPar,SigmaSPerp,SigmaDPar,SigmaDPerp,p))
 
 
 factorList = [1.1,1.3,awrongfactor,awrongfactor]
@@ -294,21 +295,36 @@ for i in xrange(4):
     defaultMonopole2 = CubicSpline(k,defaultMonopole)
     if afperp >1:
         defaultMonopoleFix2 = CubicSpline(k,defaultMonopoleFixedWrongPerp)
-        correlationMonopoleSquash = correlationMonopoleWrongPerp
-        correlationQuadrupoleSquash = correlationQuadrupoleWrongPerp
+        correlationMonopoleSquash = correlationMonopoleFixedWrongPerp
+        correlationQuadrupoleSquash = correlationQuadrupoleFixedWrongPerp
     elif afpar >1: 
         defaultMonopoleFix2 = CubicSpline(k,defaultMonopoleFixedWrongPar)
-        correlationMonopoleSquash = correlationMonopoleWrongPar
-        correlationQuadrupoleSquash = correlationQuadrupoleWrongPar
+        correlationMonopoleSquash = correlationMonopoleFixedWrongPar
+        correlationQuadrupoleSquash = correlationQuadrupoleFixedWrongPar
     else:
         defaultMonopoleFix2 = defaultMonopole2
         correlationMonopoleSquash = correlationMonopoleDefault
         correlationQuadrupoleSquash = correlationQuadrupoleDefault
 
+    ### real space
+    rArray = numpy.arange(1000000.)/1000000.*200.
+    wrongCorr = correlationMonopoleWrong(rArray)### assume this is spline?
+    squashCorr = correlationMonopoleSquash(rArray)
+    defaultCorr = correlationMonopoleDefault(rArray)
+    wrongQuad = correlationQuadrupoleWrong(rArray)
+    squashQuad = correlationQuadrupoleSquash(rArray)
+    defaultQuad = correlationQuadrupoleDefault(rArray)
+    maximumOfWrong = rArray[numpy.max(wrongCorr[rArray>80.]*rArray[rArray>80.]**2.)==wrongCorr*rArray**2.]
+    maximumOfSquash = rArray[numpy.max(squashCorr[rArray>80.]*rArray[rArray>80.]**2.)==squashCorr*rArray**2.]
+    maximumOfDefault = rArray[numpy.max(defaultCorr[rArray>80.]*rArray[rArray>80.]**2.)==defaultCorr*rArray**2.]
+
+    print 'real space location', maximumOfDefault, 'ratio of wrong to squashed',maximumOfWrong/maximumOfSquash, '(+ ratio to default', maximumOfWrong/maximumOfDefault, ')'
+
+
+    ### fourier space
     newMonopolehi = newMonopole2(khi)
     defaultMonopolehi = defaultMonopole2(khi)
     defaultMonopoleFixhi = defaultMonopoleFix2(khi)
-
     kcrit = 0.25
     maxKOfWrong =  khi[newMonopolehi==numpy.max(newMonopolehi[khi>kcrit])]
     maxKOfDefault =  khi[defaultMonopolehi==numpy.max(defaultMonopolehi[khi>kcrit])]
@@ -317,19 +333,6 @@ for i in xrange(4):
     print 'high res relative to squashed one',  khi[newMonopolehi==numpy.max(newMonopolehi)]/ khi[defaultMonopoleFixhi==numpy.max(defaultMonopoleFixhi)]*0.5+khi[newMonopolehi==numpy.min(newMonopolehi)]/ khi[defaultMonopoleFixhi==numpy.min(defaultMonopoleFixhi)]*0.5
     print 'redoing with higher peaks above 0.15, first highres then squash', maxKOfWrong/maxKOfDefault, maxKOfWrong/maxKOfRight
 
-    rArray = numpy.arange(1000000.)/1000000.*200.
-    wrongCorr = correlationMonopoleWrong(rArray)
-    squashCorr = correlationMonopoleSquash(rArray)
-    defaultCorr = correlationMonopoleDefault(rArray)
-    wrongQuad = correlationQuadrupoleWrong(rArray)
-    squashQuad = correlationQuadrupoleSquash(rArray)
-    defaultQuad = correlationQuadrupoleDefault(rArray)
-
-    maximumOfWrong = rArray[numpy.max(wrongCorr[rArray>80.]*rArray[rArray>80.]**2.)==wrongCorr*rArray**2.]
-    maximumOfSquash = rArray[numpy.max(squashCorr[rArray>80.]*rArray[rArray>80.]**2.)==squashCorr*rArray**2.]
-    maximumOfDefault = rArray[numpy.max(defaultCorr[rArray>80.]*rArray[rArray>80.]**2.)==defaultCorr*rArray**2.]
-
-    print 'real space location', maximumOfDefault, 'ratio of wrong to squashed',maximumOfWrong/maximumOfSquash, '(+ ratio to default', maximumOfWrong/maximumOfDefault, ')'
 
 
     ########## begin plotting #################
